@@ -1,43 +1,24 @@
 local Utils = {}
 
-
-function Utils:GetPlayerGender()
-    playerBodyGender = playerBodyGender or Game.GetPlayer():GetResolvedGenderName()
-    return (string.find(tostring(playerBodyGender), "Female") and "_Female") or "_Male"
-end
-
-function Utils:AddToInventory(item)
-    local equipRequest = EquipRequest.new()
-    local itemID = ItemID.FromTDBID(TweakDBID.new(item))
-    local quantity = 1
-
-    Game.GetTransactionSystem():GiveItem(Game.GetPlayer(), itemID, quantity)
-    equipRequest.owner = Game.GetPlayer()
-    Game.GetScriptableSystemsContainer():Get("EquipmentSystem"):QueueRequest(equipRequest)
-end
-
-function Utils:CalculateDelay(base)
-    local currentFPS = 1
-    local targetFPS = 30
-    local baseDelay = base
-    local maxDelay = base + 10
-
-    -- Calculate the scaling factor
-    local scalingFactor = 0.2 -- You can adjust this factor based on your preference
-
-    -- Calculate the adjusted delay
-    local adjustedDelay = baseDelay + (currentFPS - targetFPS) * scalingFactor
-
-    -- Ensure the delay is not lower than base delay
-    if adjustedDelay < base then
-        adjustedDelay = base
-
-        -- Ensure the delay isn't too high
-    elseif adjustedDelay > maxDelay then
-        adjustedDelay = maxDelay
+---Calculates the difference between two Vector4 coordinates.
+---@param v1 Vector4 The first vector
+---@param v2 Vector4 The second vector
+---@return Vector4 A new Vector4 representing the difference between v1 and v2
+function Utils:calculateVectorDifference(v1, v2)
+    -- Ensure both vectors are provided
+    if not v1 or not v2 then
+        error("Both vectors must be provided.")
     end
 
-    return adjustedDelay
+    -- Calculate the differences for each component
+    local diff = Vector4.new(
+        v1.x - v2.x,
+        v1.y - v2.y,
+        v1.z - v2.z,
+        v1.w - v2.w -- Optional fourth component
+    )
+
+    return diff
 end
 
 return Utils;
