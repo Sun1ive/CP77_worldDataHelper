@@ -47,4 +47,29 @@ function Utils:tooltip(text)
     end
 end
 
+---Handles input fields for a Vector4.
+---@param name string The name prefix for the UI elements
+---@param prop string The property of the Vector4 to edit
+---@param vector Vector4 The Vector4 object being edited
+---@return float
+function Utils:handleVector4Input(name, prop, vector)
+    -- Create a UI input box
+    local input, updated = ImGui.InputTextWithHint(
+        "##" .. name .. prop,
+        name .. " " .. prop,
+        tostring(vector[prop]), -- Convert the current value to a string for the input box
+        128
+    )
+
+    -- If the value is updated, try to convert it to a number and assign it
+    if updated then
+        local normalized = string.gsub(input, ",", ".")
+        local numValue = tonumber(normalized) -- Convert string to number
+        if numValue then
+            return numValue
+        end
+    end
+    return vector[prop]
+end
+
 return Utils;

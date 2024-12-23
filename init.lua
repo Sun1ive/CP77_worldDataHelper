@@ -20,7 +20,11 @@ worldDataHelper = {
     radioChannel = 0,
     formatter = "%.9f",
 
-    recorderPositions = {}
+    calculator = {
+        from = Vector4.new(0, 0, 0, 1),
+        to = Vector4.new(0, 0, 0, 1),
+        result = Vector4.new(0, 0, 0, 1)
+    }
 }
 
 function worldDataHelper:new()
@@ -60,7 +64,6 @@ function worldDataHelper:new()
             local viewSize = self.Utils:getViewSize()
 
             local function drawField(name, prop)
-                -- local formatText = "%.9f"
                 local text = string.gsub(string.format(self.formatter, prop), "%.", ",")
                 ImGui.InputTextWithHint("##" .. name, name, text, #text + 1, ImGuiInputTextFlags.ReadOnly)
                 self.Utils:tooltip(name)
@@ -132,6 +135,8 @@ function worldDataHelper:new()
                 end
                 ImGui.PopItemWidth()
 
+                ImGui.Separator()
+
                 if self.positionOffset then
                     ImGui.PushItemWidth(100 * viewSize)
                     drawField("X-offset", self.positionOffset.x)
@@ -144,8 +149,56 @@ function worldDataHelper:new()
 
                 ImGui.Separator()
 
-                if ImGui.Button("Start recording") then
+                if ImGui.CollapsingHeader("offsets") then
+                    ImGui.PushItemWidth(300 * viewSize)
+                    ImGui.Text("From X")
+                    ImGui.SameLine()
+                    ImGui.Text("From Y")
+                    ImGui.SameLine()
+                    ImGui.Text("From Z")
+                    ImGui.PopItemWidth()
 
+                    ImGui.PushItemWidth(100 * viewSize)
+                    self.calculator.from.x = Utils:handleVector4Input("From", "x", self.calculator.from)
+                    ImGui.SameLine()
+                    self.calculator.from.y = Utils:handleVector4Input("From", "y", self.calculator.from)
+                    ImGui.SameLine()
+                    self.calculator.from.z = Utils:handleVector4Input("From", "z", self.calculator.from)
+                    ImGui.PopItemWidth()
+
+                    ImGui.PushItemWidth(300 * viewSize)
+                    ImGui.Text("To X")
+                    ImGui.SameLine()
+                    ImGui.Text("To Y")
+                    ImGui.SameLine()
+                    ImGui.Text("To Z")
+                    ImGui.PopItemWidth()
+
+                    ImGui.PushItemWidth(100 * viewSize)
+                    -- Optionally do the same for `to` Vector4
+                    self.calculator.to.x = Utils:handleVector4Input("To", "x", self.calculator.to)
+                    ImGui.SameLine()
+                    self.calculator.to.y = Utils:handleVector4Input("To", "y", self.calculator.to)
+                    ImGui.SameLine()
+                    self.calculator.to.z = Utils:handleVector4Input("To", "z", self.calculator.to)
+                    ImGui.PopItemWidth()
+
+                    ImGui.PushItemWidth(300 * viewSize)
+                    ImGui.Text("Result X")
+                    ImGui.SameLine()
+                    ImGui.Text("Result Y")
+                    ImGui.SameLine()
+                    ImGui.Text("Result Z")
+                    ImGui.PopItemWidth()
+
+                    ImGui.PushItemWidth(100 * viewSize)
+                    local result = Utils:calculateVectorDifference(self.calculator.from, self.calculator.to)
+                    drawField("ResultX", result.x)
+                    ImGui.SameLine()
+                    drawField("ResultY", result.y)
+                    ImGui.SameLine()
+                    drawField("ResultZ", result.z)
+                    ImGui.PopItemWidth()
                 end
             end
             ImGui.End()
