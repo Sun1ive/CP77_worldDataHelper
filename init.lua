@@ -2,11 +2,12 @@ worldDataHelper = {
     GameUI = require("modules/GameUI"),
     Utils = require("modules/Utils"),
 
+    renderUi = false,
     tppToggle = false,
     savedPosition = nil,
     positionOffset = nil,
     player = nil,
-    cetOpen = false,
+    isOverlay = false,
     inGame = false,
     inMenu = false,
 }
@@ -29,15 +30,19 @@ function worldDataHelper:new()
     end)
 
     registerForEvent("onOverlayOpen", function()
-        self.cetOpen = true
+        self.isOverlay = true
     end)
 
     registerForEvent("onOverlayClose", function()
-        self.cetOpen = false
+        self.isOverlay = false
+    end)
+
+    registerHotkey('renderUi', 'Render UI Key', function()
+        self.renderUi = not self.renderUi
     end)
 
     registerForEvent('onDraw', function()
-        if self.inGame and not self.inMenu then
+        if self.inGame and not self.inMenu and self.renderUi then
             local player = Game.GetPlayer()
             local position = player.GetWorldPosition(player)
             local orient = player.GetWorldOrientation(player)
