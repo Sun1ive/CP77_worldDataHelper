@@ -1,8 +1,14 @@
+---@class worldDataHelper
+---@field player any
+---@field formatter string
+---@field savedPosition Vector4?
+---@field positionOffset Vector4?
+---@field channel integer
 worldDataHelper = {
     GameUI = require("modules/GameUI"),
     Utils = require("modules/Utils"),
 
-    renderUi = false,
+    renderUi = true,
     tppToggle = false,
     savedPosition = nil,
     positionOffset = nil,
@@ -10,6 +16,11 @@ worldDataHelper = {
     isOverlay = false,
     inGame = false,
     inMenu = false,
+
+    radioChannel = 0,
+    formatter = "%.9f",
+
+    recorderPositions = {}
 }
 
 function worldDataHelper:new()
@@ -46,27 +57,13 @@ function worldDataHelper:new()
             local player = Game.GetPlayer()
             local position = player.GetWorldPosition(player)
             local orient = player.GetWorldOrientation(player)
-
-            local viewSize = ImGui.GetFontSize() / 15
-
-            local function setCursorRelative(x, y)
-                local xC, yC = ImGui.GetMousePos()
-                ImGui.SetNextWindowPos(xC + x * viewSize, yC + y * viewSize, ImGuiCond.Always)
-            end
-
-            local function tooltip(text)
-                if ImGui.IsItemHovered() then
-                    setCursorRelative(8, 8)
-
-                    ImGui.SetTooltip(text)
-                end
-            end
+            local viewSize = self.Utils:getViewSize()
 
             local function drawField(name, prop)
-                local formatText = "%.9f"
-                local text = string.gsub(string.format(formatText, prop), "%.", ",")
+                -- local formatText = "%.9f"
+                local text = string.gsub(string.format(self.formatter, prop), "%.", ",")
                 ImGui.InputTextWithHint("##" .. name, name, text, #text + 1, ImGuiInputTextFlags.ReadOnly)
-                tooltip(name)
+                self.Utils:tooltip(name)
             end
 
             ImGui.SetNextWindowPos(100, 100, ImGuiCond.FirstUseEver)  -- set window position x, y
@@ -74,7 +71,22 @@ function worldDataHelper:new()
 
             if ImGui.Begin("World Position Helper") then
                 ImGui.PushStyleColor(ImGuiCol.Text, 0xFFA5A19B)
-                ImGui.PushItemWidth(80 * viewSize)
+
+                ImGui.PushItemWidth(100 * viewSize)
+                self.radioChannel = ImGui.RadioButton("%.9f", self.radioChannel, 0)
+                ImGui.SameLine()
+                self.radioChannel = ImGui.RadioButton("%.2f", self.radioChannel, 1)
+                ImGui.PopItemWidth()
+
+                if self.radioChannel == 0 then
+                    self.formatter = "%.9f"
+                else
+                    self.formatter = "%.2f"
+                end
+
+                ImGui.Separator()
+
+                ImGui.PushItemWidth(100 * viewSize)
                 drawField("X", position.x)
                 ImGui.SameLine()
                 drawField("Y", position.y)
@@ -120,7 +132,6 @@ function worldDataHelper:new()
                 end
                 ImGui.PopItemWidth()
 
-                ImGui.Separator()
                 if self.positionOffset then
                     ImGui.PushItemWidth(100 * viewSize)
                     drawField("X-offset", self.positionOffset.x)
@@ -129,6 +140,12 @@ function worldDataHelper:new()
                     ImGui.SameLine()
                     drawField("Z-offset", self.positionOffset.z)
                     ImGui.PopItemWidth()
+                end
+
+                ImGui.Separator()
+
+                if ImGui.Button("Start recording") then
+
                 end
             end
             ImGui.End()
