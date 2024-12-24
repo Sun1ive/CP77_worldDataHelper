@@ -7,10 +7,11 @@
 ---@field player PlayerPuppet?
 Recorder = {
     Utils = require('modules/Utils'),
+    Exporter = require('modules/classes/Exporter'),
 
     ---@type Vector4[]
     points = {},
-    positionType = 0,
+    positionType = 1,
     isStarted = false,
     relativePoint = nil,
 
@@ -23,6 +24,7 @@ function Recorder:cleanUpPoints()
     for key in pairs(self.points) do
         self.points[key] = nil
     end
+    self.relativePoint = nil
 end
 
 function Recorder:insertPoint()
@@ -35,7 +37,7 @@ function Recorder:insertPoint()
             self.relativePoint = pos
             table.insert(self.points, Vector4.new(0, 0, 0, 1))
         else
-            table.insert(self.points, Utils.calculateVectorDifference(self.relativePoint, pos))
+            table.insert(self.points, Utils.calculateVectorDifference(pos, self.relativePoint))
         end
     end
 end
@@ -44,9 +46,8 @@ function Recorder:render()
     if self.viewSize == 0 then
         self.viewSize = self.Utils.getViewSize()
     end
-    if not self.player then
-        self.player = Game.GetPlayer()
-    end
+
+    self.player = Game.GetPlayer()
 
     if ImGui.CollapsingHeader("Recorder") then
         ImGui.PushItemWidth(100 * self.viewSize)
@@ -76,6 +77,21 @@ function Recorder:render()
                 for _, pos in ipairs(self.points) do
                     print(string.format("Recorded Position: x=%.2f, y=%.2f, z=%.2f", pos.x, pos.y, pos.z))
                 end
+
+                local result = {}
+                for _, value in ipairs(self.points) do
+                    local json = JsonObject.new()
+                    json:SetKeyDouble("x", value.x)
+                    json:SetKeyDouble("y", value.y)
+                    json:SetKeyDouble("z", value.z)
+                    local str = json:ToString()
+                    table.insert(result, str)
+                end
+
+                -- fix it later
+                result = '[' .. table.concat(result, ",") .. ']'
+                Exporter.saveFile('test.json', result)
+
                 self:cleanUpPoints()
             end
 

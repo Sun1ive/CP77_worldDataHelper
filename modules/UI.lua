@@ -11,7 +11,6 @@ Calculator = nil
 UI = {
     version = "0.0.8",
     Utils = require('modules/Utils'),
-    Cron = require('modules/Cron'),
     Recorder = require('modules/ui/Recorder'),
     Teleport = require('modules/ui/Teleport'),
 
@@ -85,39 +84,12 @@ function UI:renderOffsetsTab()
         self:drawField("ResultZ", result.z)
         ImGui.PopItemWidth()
     end
-    -- MOVE TO Offsets tab
-    -- ImGui.SameLine()
-    -- if ImGui.Button("Save Position") then
-    --     if player then
-    --         self.savedPosition = player.GetWorldPosition(player)
-    --         print(self.savedPosition.x .. "\n" .. self.savedPosition.y .. "\n" .. self.savedPosition.z)
-    --     end
-    -- end
-    -- ImGui.SameLine()
-    -- if self.savedPosition then
-    --     if ImGui.Button("Calc offset") then
-    --         self.positionOffset = self.Utils:calculateVectorDifference(position, self.savedPosition)
-    --     end
-    -- end
-    -- ImGui.PopItemWidth()
-
-    -- ImGui.Separator()
-
-    -- if self.positionOffset then
-    --     ImGui.PushItemWidth(100 * viewSize)
-    --     self:drawField("X-offset", self.positionOffset.x)
-    --     ImGui.SameLine()
-    --     self:drawField("Y-offset", self.positionOffset.y)
-    --     ImGui.SameLine()
-    --     self:drawField("Z-offset", self.positionOffset.z)
-    --     ImGui.PopItemWidth()
-    -- end
 end
 
 function UI:render()
-    if not self.player then
-        self.player = Game.GetPlayer()
-    end
+    -- if not self.player then
+    self.player = Game.GetPlayer()
+    -- end
     if self.viewSize == 0 then
         self.viewSize = self.Utils:getViewSize()
     end

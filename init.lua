@@ -3,7 +3,7 @@
 ---@field formatter string
 ---@field channel integer
 worldDataHelper = {
-    GameUI = require("modules/GameUI"),
+    GameUI = require("modules/external/GameUI"),
     UI = require('modules/UI'),
 
     renderUi = true,

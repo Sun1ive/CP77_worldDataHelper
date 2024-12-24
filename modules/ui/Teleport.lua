@@ -12,15 +12,15 @@ function Teleport:new()
     return obj
 end
 
----@param dest Vector4
 function Teleport:teleportPlayer()
+    print('teleport' .. self.destination.x, self.destination.y, self.destination.z)
     Game.GetTeleportationFacility():Teleport(self.player, self.destination, EulerAngles.new(0, 0, 45))
 end
 
 function Teleport:render()
     baseUI:init()
 
-    if ImGui.CollapsingHeader("Teleport") then
+    if ImGui.CollapsingHeader("Teleport Player") then
         if self.destination == nil then
             self.destination = Vector4.new(0, 0, 0, 1)
         end
@@ -33,7 +33,7 @@ function Teleport:render()
         self.destination.z = Utils.handleVector4Input("TPDest", "z", self.destination)
         ImGui.PopItemWidth()
 
-        if ImGui.Button("teleport") then
+        if ImGui.Button("tp to point") then
             self:teleportPlayer()
         end
     end
