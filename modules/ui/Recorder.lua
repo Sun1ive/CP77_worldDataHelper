@@ -78,19 +78,16 @@ function Recorder:render()
                     print(string.format("Recorded Position: x=%.2f, y=%.2f, z=%.2f", pos.x, pos.y, pos.z))
                 end
 
-                local result = {}
-                for _, value in ipairs(self.points) do
+                local array = JsonArray.new()
+                for _idx, value in ipairs(self.points) do
                     local json = JsonObject.new()
                     json:SetKeyDouble("x", value.x)
                     json:SetKeyDouble("y", value.y)
                     json:SetKeyDouble("z", value.z)
-                    local str = json:ToString()
-                    table.insert(result, str)
+                    array:AddItem(json)
                 end
-
-                -- fix it later
-                result = '[' .. table.concat(result, ",") .. ']'
-                Exporter.saveFile('test.json', result)
+                local str = array:ToString()
+                Exporter.saveFile('test.json', str)
 
                 self:cleanUpPoints()
             end
