@@ -1,29 +1,18 @@
----@class Recorder
----@field positionType integer # 0 = absolute 1 = relative
----@field isStarted boolean
----@field relativePoint Vector4
-Recorder = {
-    ---@type Vector4[]
-    points = {},
-    positionType = 0,
-    isStarted = false,
-    relativePoint = Vector4.new(0, 0, 0, 1)
-}
-
 ---@class Calculator
----@field from Vector4?
----@field to Vector4?
----@field result Vector4?
-
+---@field from Vector4
+---@field to Vector4
+---@field result Vector4
+Calculator = nil
 ---@class UI
 ---@field render function
----@field calculator Calculator
+---@field calculator Calculator?
 ---@field player PlayerPuppet?
 ---@field viewSize number
 UI = {
     version = "0.0.8",
     Utils = require('modules/Utils'),
     Cron = require('modules/Cron'),
+    Recorder = require('modules/ui/Recorder'),
 
     tppToggle = false,
     formatType = 0,
@@ -34,75 +23,13 @@ UI = {
 
     recorder = Recorder,
 
-    calculator = {
-        from = Vector4.new(0, 0, 0, 1),
-        to = Vector4.new(0, 0, 0, 1),
-        result = Vector4.new(0, 0, 0, 1)
-    }
+    calculator = Calculator
 }
 
 function UI:drawField(name, prop)
     local text = string.gsub(string.format(self.formatter, prop), "%.", ",")
     ImGui.InputTextWithHint("##" .. name, name, text, #text + 1, ImGuiInputTextFlags.ReadOnly)
     self.Utils:tooltip(name)
-end
-
-function UI:renderRecorder()
-    local function cleanUpPoints()
-        for key in pairs(self.recorder.points) do
-            self.recorder.points[key] = nil
-        end
-    end
-
-    local function insertPoint()
-        local pos = self.player:GetWorldPosition()
-        if self.recorder.positionType == 0 then
-            table.insert(self.recorder.points, pos)
-        else
-            if next(self.recorder.points) == nil then
-                self.recorder.relativePoint = pos
-                table.insert(self.recorder.points, Vector4.new(0, 0, 0, 1))
-            else
-                table.insert(self.recorder.points, Utils.calculateVectorDifference(self.recorder.relativePoint, pos))
-            end
-        end
-
-    end
-    if ImGui.CollapsingHeader("Recorder") then
-        ImGui.PushItemWidth(100 * self.viewSize)
-        self.recorder.positionType = ImGui.RadioButton("absolute", self.recorder.positionType, 0)
-        ImGui.SameLine()
-        self.recorder.positionType = ImGui.RadioButton("relative", self.recorder.positionType, 1)
-        ImGui.PopItemWidth()
-
-        ImGui.Separator()
-
-        ImGui.PushItemWidth(100 * self.viewSize)
-        if not self.recorder.isStarted then
-            if ImGui.Button("Start record") then
-                self.recorder.isStarted = true
-                insertPoint()
-            end
-        else
-            if ImGui.Button("Add point") then
-                insertPoint()
-            end
-
-            ImGui.SameLine()
-
-            if ImGui.Button("Stop record") then
-                insertPoint()
-                self.recorder.isStarted = false
-                for _, pos in ipairs(self.recorder.points) do
-                    print(string.format("Recorded Position: x=%.2f, y=%.2f, z=%.2f", pos.x, pos.y, pos.z))
-                end
-                cleanUpPoints()
-            end
-
-        end
-
-        ImGui.PopItemWidth()
-    end
 end
 
 ---@return nil
@@ -193,6 +120,13 @@ function UI:render()
     if self.viewSize == 0 then
         self.viewSize = self.Utils:getViewSize()
     end
+    if not self.calculator then
+        self.calculator = {
+            from = Vector4.new(0, 0, 0, 1),
+            to = Vector4.new(0, 0, 0, 1),
+            result = Vector4.new(0, 0, 0, 1)
+        }
+    end
 
     local position = self.player:GetWorldPosition()
     local orient = self.player:GetWorldOrientation()
@@ -253,7 +187,7 @@ function UI:render()
 
         self:renderOffsetsTab()
 
-        self:renderRecorder()
+        self.Recorder:render()
 
     end
     ImGui.End()
