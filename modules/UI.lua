@@ -1,7 +1,20 @@
+---@class Recorder
+---@field positionType integer # 0 = absolute 1 = relative
+---@field isStarted boolean
+---@field relativePoint Vector4
+Recorder = {
+    ---@type Vector4[]
+    points = {},
+    positionType = 0,
+    isStarted = false,
+    relativePoint = Vector4.new(0, 0, 0, 1)
+}
+
 ---@class Calculator
 ---@field from Vector4?
 ---@field to Vector4?
 ---@field result Vector4?
+
 ---@class UI
 ---@field render function
 ---@field calculator Calculator
@@ -12,17 +25,14 @@ UI = {
     Utils = require('modules/Utils'),
     Cron = require('modules/Cron'),
 
-    startedRecording = false,
-
     tppToggle = false,
-    radioChannel = 0,
+    formatType = 0,
     formatter = "%.9f",
 
     player = nil,
     viewSize = 0,
 
-    ---@type Vector4[] # points is an array of Vector4
-    points = {},
+    recorder = Recorder,
 
     calculator = {
         from = Vector4.new(0, 0, 0, 1),
@@ -38,24 +48,55 @@ function UI:drawField(name, prop)
 end
 
 function UI:renderRecorder()
+    local function cleanUpPoints()
+        for key in pairs(self.recorder.points) do
+            self.recorder.points[key] = nil
+        end
+    end
+
+    local function insertPoint()
+        local pos = self.player:GetWorldPosition()
+        if self.recorder.positionType == 0 then
+            table.insert(self.recorder.points, pos)
+        else
+            if next(self.recorder.points) == nil then
+                self.recorder.relativePoint = pos
+                table.insert(self.recorder.points, Vector4.new(0, 0, 0, 1))
+            else
+                table.insert(self.recorder.points, Utils.calculateVectorDifference(self.recorder.relativePoint, pos))
+            end
+        end
+
+    end
     if ImGui.CollapsingHeader("Recorder") then
-        ImGui.PushItemWidth(300 * self.viewSize)
-        if not self.startedRecording then
+        ImGui.PushItemWidth(100 * self.viewSize)
+        self.recorder.positionType = ImGui.RadioButton("absolute", self.recorder.positionType, 0)
+        ImGui.SameLine()
+        self.recorder.positionType = ImGui.RadioButton("relative", self.recorder.positionType, 1)
+        ImGui.PopItemWidth()
+
+        ImGui.Separator()
+
+        ImGui.PushItemWidth(100 * self.viewSize)
+        if not self.recorder.isStarted then
             if ImGui.Button("Start record") then
-                self.startedRecording = true
+                self.recorder.isStarted = true
+                insertPoint()
             end
         else
             if ImGui.Button("Add point") then
-                local pos = self.player:GetWorldPosition()
-                table.insert(self.points, pos)
-                print(string.format("Recorded Position: x=%.2f, y=%.2f, z=%.2f, w=%.2f", pos.x, pos.y, pos.z, pos.w))
+                insertPoint()
             end
+
             ImGui.SameLine()
+
             if ImGui.Button("Stop record") then
-                self.startedRecording = false
-                for index, pos in ipairs(self.points) do
-                    print(string.format("Recorded Position: x=%.2f, y=%.2f, z=%.2f, w=%.2f", pos.x, pos.y, pos.z, pos.w))
+                insertPoint()
+                self.recorder.isStarted = false
+                for _, pos in ipairs(self.recorder.points) do
+                    print(string.format("Recorded Position: x=%.2f, y=%.2f, z=%.2f", pos.x, pos.y, pos.z))
                 end
+                cleanUpPoints()
             end
 
         end
@@ -64,6 +105,7 @@ function UI:renderRecorder()
     end
 end
 
+---@return nil
 function UI:renderOffsetsTab()
     if ImGui.CollapsingHeader("offsets") then
         ImGui.PushItemWidth(300 * self.viewSize)
@@ -162,12 +204,12 @@ function UI:render()
         ImGui.PushStyleColor(ImGuiCol.Text, 0xFFA5A19B)
 
         ImGui.PushItemWidth(100 * self.viewSize)
-        self.radioChannel = ImGui.RadioButton("%.9f", self.radioChannel, 0)
+        self.formatType = ImGui.RadioButton("%.9f", self.formatType, 0)
         ImGui.SameLine()
-        self.radioChannel = ImGui.RadioButton("%.2f", self.radioChannel, 1)
+        self.formatType = ImGui.RadioButton("%.2f", self.formatType, 1)
         ImGui.PopItemWidth()
 
-        if self.radioChannel == 0 then
+        if self.formatType == 0 then
             self.formatter = "%.9f"
         else
             self.formatter = "%.2f"
