@@ -13,6 +13,7 @@ UI = {
     Utils = require('modules/Utils'),
     Cron = require('modules/Cron'),
     Recorder = require('modules/ui/Recorder'),
+    Teleport = require('modules/ui/Teleport'),
 
     tppToggle = false,
     formatType = 0,
@@ -188,6 +189,8 @@ function UI:render()
         self:renderOffsetsTab()
 
         self.Recorder:render()
+
+        self.Teleport:render()
 
     end
     ImGui.End()

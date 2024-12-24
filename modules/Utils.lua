@@ -15,12 +15,7 @@ function Utils.calculateVectorDifference(v1, v2)
     end
 
     -- Calculate the differences for each component
-    local diff = Vector4.new(
-        v1.x - v2.x,
-        v1.y - v2.y,
-        v1.z - v2.z,
-        v1.w - v2.w -- Optional fourth component
-    )
+    local diff = Vector4.new(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z, v1.w - v2.w)
 
     return diff
 end
@@ -53,15 +48,9 @@ end
 ---@param vector Vector4 The Vector4 object being edited
 ---@return float
 function Utils.handleVector4Input(name, prop, vector)
-    -- Create a UI input box
-    local input, updated = ImGui.InputTextWithHint(
-        "##" .. name .. prop,
-        name .. " " .. prop,
-        tostring(vector[prop]), -- Convert the current value to a string for the input box
-        128
-    )
+    local text = tostring(vector[prop])
+    local input, updated = ImGui.InputTextWithHint("##" .. name .. prop, name .. " " .. prop, text, 256)
 
-    -- If the value is updated, try to convert it to a number and assign it
     if updated then
         local normalized = string.gsub(input, ",", ".")
         local numValue = tonumber(normalized) -- Convert string to number
