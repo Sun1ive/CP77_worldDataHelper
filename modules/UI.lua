@@ -82,8 +82,6 @@ function UI:render()
 
         ImGui.Separator()
 
-        -- self:render()
-
         self.Offsets:render(self.formatter)
 
         self.Recorder:render()

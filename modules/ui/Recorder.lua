@@ -25,6 +25,12 @@ function Recorder:cleanUpPoints()
     self.relativePoint = nil
 end
 
+function Recorder:drawField(name, prop, formatter)
+    local text = string.format(formatter, prop)
+    ImGui.InputTextWithHint("##" .. name, name, text, #text + 1, ImGuiInputTextFlags.ReadOnly)
+    self.Utils.tooltip(name)
+end
+
 function Recorder:insertPoint()
     local pos = self.player:GetWorldPosition()
 
@@ -93,6 +99,21 @@ function Recorder:render()
         end
 
         ImGui.PopItemWidth()
+
+        ImGui.Separator()
+
+        if self.isStarted and next(self.points) ~= nil then
+            for index, point in ipairs(self.points) do
+                ImGui.PushItemWidth(80 * self.viewSize)
+                self:drawField("X", tostring(point.x), "%.4f")
+                ImGui.SameLine()
+                self:drawField("Y", tostring(point.y), "%.4f")
+                ImGui.SameLine()
+                self:drawField("Z", tostring(point.z), "%.4f")
+                ImGui.PopItemWidth()
+                ImGui.Separator()
+            end
+        end
     end
 end
 
