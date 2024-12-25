@@ -5,10 +5,10 @@ worldDataHelper = {
     GameUI = require("modules/external/GameUI"),
     UI = require('modules/UI'),
 
-    renderUi = true,
+    renderUi = false,
     isOverlay = false,
     inGame = false,
-    inMenu = false,
+    inMenu = false
 }
 
 function worldDataHelper:new()

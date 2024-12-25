@@ -11,10 +11,6 @@ function baseUI:new()
     instance.player = nil
     instance.viewSize = 0
     instance.Utils = require('modules/Utils')
-
-    assert(instance.Utils, "Utils module could not be loaded") -- Ensure Utils is loaded
-    assert(instance.Utils.getViewSize, "Utils.getViewSize is nil") -- Ensure getViewSize exists
-
     return instance
 end
 

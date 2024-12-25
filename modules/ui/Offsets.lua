@@ -12,8 +12,9 @@ Offsets = {
 }
 
 ---@param formatter string
+---@param enableReplacer boolean
 ---@return nil
-function Offsets:render(formatter)
+function Offsets:render(formatter, enableReplacer)
     if self.viewSize == 0 then
         self.viewSize = self.Utils.getViewSize()
     end
@@ -69,12 +70,12 @@ function Offsets:render(formatter)
         ImGui.PopItemWidth()
 
         ImGui.PushItemWidth(100 * self.viewSize)
-        local result = Utils.calculateVectorDifference(self.from, self.to)
-        self.Utils.drawField("ResultX", result.x, formatter)
+        local result = Utils.calculateVector4Difference(self.from, self.to)
+        self.Utils.drawField("ResultX", result.x, formatter, enableReplacer)
         ImGui.SameLine()
-        self.Utils.drawField("ResultY", result.y, formatter)
+        self.Utils.drawField("ResultY", result.y, formatter, enableReplacer)
         ImGui.SameLine()
-        self.Utils.drawField("ResultZ", result.z, formatter)
+        self.Utils.drawField("ResultZ", result.z, formatter, enableReplacer)
         ImGui.PopItemWidth()
     end
 end

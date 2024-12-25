@@ -7,8 +7,8 @@ Utils = {}
 ---Calculates the difference between two Vector4 coordinates.
 ---@param v1 Vector4 The first vector
 ---@param v2 Vector4 The second vector
----@return Vector4 A new Vector4 representing the difference between v1 and v2
-function Utils.calculateVectorDifference(v1, v2)
+---@return Vector4 DVector new Vector4 representing the difference between v1 and v2
+function Utils.calculateVector4Difference(v1, v2)
     -- Ensure both vectors are provided
     if not v1 or not v2 then
         error("Both vectors must be provided.")
@@ -61,8 +61,16 @@ function Utils.handleVector4Input(name, prop, vector)
     return vector[prop]
 end
 
-function Utils.drawField(name, prop, formatter)
-    local text = string.gsub(string.format(formatter, prop), "%.", ",")
+---ImGui.InputTextWithHint DrawField
+---@param name string
+---@param prop any
+---@param formatter string
+---@param replace boolean?
+function Utils.drawField(name, prop, formatter, replace)
+    local text = string.format(formatter, prop)
+    if replace ~= nil and replace == true then
+        text = string.gsub(text, "%.", ",")
+    end
     ImGui.InputTextWithHint("##" .. name, name, text, #text + 1, ImGuiInputTextFlags.ReadOnly)
     Utils.tooltip(name)
 end
