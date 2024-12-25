@@ -2,7 +2,6 @@
 ---@field positionType integer # 0 = absolute 1 = relative
 ---@field isStarted boolean
 ---@field relativePoint Vector4?
----MOVE THIS PROPS TO BASE
 ---@field viewSize number
 ---@field player PlayerPuppet?
 Recorder = {
@@ -15,7 +14,6 @@ Recorder = {
     isStarted = false,
     relativePoint = nil,
 
-    -- MOVE THIS TO BASE CLASS
     viewSize = 0,
     player = nil
 }
@@ -79,7 +77,7 @@ function Recorder:render()
                 end
 
                 local array = JsonArray.new()
-                for _idx, value in ipairs(self.points) do
+                for _, value in ipairs(self.points) do
                     local json = JsonObject.new()
                     json:SetKeyDouble("x", value.x)
                     json:SetKeyDouble("y", value.y)

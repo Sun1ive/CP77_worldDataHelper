@@ -12,8 +12,10 @@ end
 
 function Exporter.saveFile(path, data)
     local file = io.open(path, "w")
-    file:write(data)
-    file:close()
+    if (file ~= nil) then
+        file:write(data)
+        file:close()
+    end
 end
 
 return Exporter

@@ -1,5 +1,4 @@
 ---@class worldDataHelper
----@field player any
 ---@field formatter string
 ---@field channel integer
 worldDataHelper = {
@@ -7,11 +6,9 @@ worldDataHelper = {
     UI = require('modules/UI'),
 
     renderUi = true,
-    player = nil,
     isOverlay = false,
     inGame = false,
     inMenu = false,
-
 }
 
 function worldDataHelper:new()
@@ -21,7 +18,6 @@ function worldDataHelper:new()
         end)
 
         self.GameUI.OnSessionStart(function()
-            self.player = Game.GetPlayer()
             self.inGame = true
         end)
 

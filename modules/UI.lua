@@ -1,108 +1,32 @@
----@class Calculator
----@field from Vector4
----@field to Vector4
----@field result Vector4
-Calculator = nil
 ---@class UI
 ---@field render function
----@field calculator Calculator?
 ---@field player PlayerPuppet?
 ---@field viewSize number
+---@field formatter string
+---@field formatType number
 UI = {
     version = "0.0.8",
     Utils = require('modules/Utils'),
     Recorder = require('modules/ui/Recorder'),
     Teleport = require('modules/ui/Teleport'),
+    Offsets = require('modules/ui/Offsets'),
 
     tppToggle = false,
     formatType = 0,
     formatter = "%.9f",
 
-    player = nil,
-    viewSize = 0,
-
-    recorder = Recorder,
-
-    calculator = Calculator
+    viewSize = 0
 }
 
-function UI:drawField(name, prop)
-    local text = string.gsub(string.format(self.formatter, prop), "%.", ",")
-    ImGui.InputTextWithHint("##" .. name, name, text, #text + 1, ImGuiInputTextFlags.ReadOnly)
-    self.Utils:tooltip(name)
-end
-
----@return nil
-function UI:renderOffsetsTab()
-    if ImGui.CollapsingHeader("offsets") then
-        ImGui.PushItemWidth(300 * self.viewSize)
-        ImGui.Text("From X")
-        ImGui.SameLine()
-        ImGui.Text("From Y")
-        ImGui.SameLine()
-        ImGui.Text("From Z")
-        ImGui.PopItemWidth()
-
-        ImGui.PushItemWidth(100 * self.viewSize)
-        self.calculator.from.x = Utils.handleVector4Input("From", "x", self.calculator.from)
-        ImGui.SameLine()
-        self.calculator.from.y = Utils.handleVector4Input("From", "y", self.calculator.from)
-        ImGui.SameLine()
-        self.calculator.from.z = Utils.handleVector4Input("From", "z", self.calculator.from)
-        ImGui.PopItemWidth()
-
-        ImGui.PushItemWidth(300 * self.viewSize)
-        ImGui.Text("To X")
-        ImGui.SameLine()
-        ImGui.Text("To Y")
-        ImGui.SameLine()
-        ImGui.Text("To Z")
-        ImGui.PopItemWidth()
-
-        ImGui.PushItemWidth(100 * self.viewSize)
-        self.calculator.to.x = Utils.handleVector4Input("To", "x", self.calculator.to)
-        ImGui.SameLine()
-        self.calculator.to.y = Utils.handleVector4Input("To", "y", self.calculator.to)
-        ImGui.SameLine()
-        self.calculator.to.z = Utils.handleVector4Input("To", "z", self.calculator.to)
-        ImGui.PopItemWidth()
-
-        ImGui.PushItemWidth(300 * self.viewSize)
-        ImGui.Text("Result X")
-        ImGui.SameLine()
-        ImGui.Text("Result Y")
-        ImGui.SameLine()
-        ImGui.Text("Result Z")
-        ImGui.PopItemWidth()
-
-        ImGui.PushItemWidth(100 * self.viewSize)
-        local result = Utils.calculateVectorDifference(self.calculator.from, self.calculator.to)
-        self:drawField("ResultX", result.x)
-        ImGui.SameLine()
-        self:drawField("ResultY", result.y)
-        ImGui.SameLine()
-        self:drawField("ResultZ", result.z)
-        ImGui.PopItemWidth()
-    end
-end
-
 function UI:render()
-    -- if not self.player then
-    self.player = Game.GetPlayer()
-    -- end
+
     if self.viewSize == 0 then
         self.viewSize = self.Utils:getViewSize()
     end
-    if not self.calculator then
-        self.calculator = {
-            from = Vector4.new(0, 0, 0, 1),
-            to = Vector4.new(0, 0, 0, 1),
-            result = Vector4.new(0, 0, 0, 1)
-        }
-    end
+    local player = Game.GetPlayer()
 
-    local position = self.player:GetWorldPosition()
-    local orient = self.player:GetWorldOrientation()
+    local position = player:GetWorldPosition()
+    local orient = player:GetWorldOrientation()
 
     ImGui.SetNextWindowPos(100, 100, ImGuiCond.FirstUseEver) -- set window position x, y
     ImGui.SetNextWindowSize(100, 100, ImGuiCond.FirstUseEver) -- set window size w, h
@@ -125,21 +49,21 @@ function UI:render()
         ImGui.Separator()
 
         ImGui.PushItemWidth(100 * self.viewSize)
-        self:drawField("X", position.x)
+        self.Utils.drawField("X", position.x, self.formatter)
         ImGui.SameLine()
-        self:drawField("Y", position.y)
+        self.Utils.drawField("Y", position.y, self.formatter)
         ImGui.SameLine()
-        self:drawField("Z", position.z)
+        self.Utils.drawField("Z", position.z, self.formatter)
         ImGui.PopItemWidth()
 
         ImGui.PushItemWidth(80 * self.viewSize)
-        self:drawField("I", orient.i)
+        self.Utils.drawField("I", orient.i, self.formatter)
         ImGui.SameLine()
-        self:drawField("J", orient.j)
+        self.Utils.drawField("J", orient.j, self.formatter)
         ImGui.SameLine()
-        self:drawField("K", orient.k)
+        self.Utils.drawField("K", orient.k, self.formatter)
         ImGui.SameLine()
-        self:drawField("R", orient.r)
+        self.Utils.drawField("R", orient.r, self.formatter)
         ImGui.PopItemWidth()
 
         ImGui.Separator()
@@ -148,17 +72,19 @@ function UI:render()
         if ImGui.Button("Toggle TPP") then
             self.tppToggle = not self.tppToggle
             if self.tppToggle then
-                Game.GetPlayer():GetFPPCameraComponent():SetLocalPosition(Vector4.new(-0.5, -2, 0, 1.0))
-                Game.GetPlayer():GetFPPCameraComponent():SetLocalOrientation(Quaternion.new(0.0, 0.0, 0.0, 1.0))
+                player:GetFPPCameraComponent():SetLocalPosition(Vector4.new(-0.5, -2, 0, 1.0))
+                player:GetFPPCameraComponent():SetLocalOrientation(Quaternion.new(0.0, 0.0, 0.0, 1.0))
             else
-                Game.GetPlayer():GetFPPCameraComponent():SetLocalPosition(Vector4.new(0.0, 0, 0, 1.0))
-                Game.GetPlayer():GetFPPCameraComponent():SetLocalOrientation(Quaternion.new(0.0, 0.0, 0.0, 1.0))
+                player:GetFPPCameraComponent():SetLocalPosition(Vector4.new(0.0, 0, 0, 1.0))
+                player:GetFPPCameraComponent():SetLocalOrientation(Quaternion.new(0.0, 0.0, 0.0, 1.0))
             end
         end
 
         ImGui.Separator()
 
-        self:renderOffsetsTab()
+        -- self:render()
+
+        self.Offsets:render(self.formatter)
 
         self.Recorder:render()
 
