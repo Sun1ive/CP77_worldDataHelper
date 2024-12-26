@@ -7,9 +7,9 @@
 UI = {
     version = "0.0.8",
     Utils = require('modules/Utils'),
-    Recorder = require('modules/ui/Recorder'),
     Teleport = require('modules/ui/Teleport'),
     Offsets = require('modules/ui/Offsets'),
+    Recorder = require('modules/ui/Recorder'),
 
     tppToggle = false,
     formatType = 0,
@@ -104,10 +104,9 @@ function UI:render()
 
         self.Offsets:render(self.formatter, self.enableReplacer)
 
-        self.Recorder:render()
-
         self.Teleport:render()
 
+        self.Recorder:render()
     end
     ImGui.End()
 

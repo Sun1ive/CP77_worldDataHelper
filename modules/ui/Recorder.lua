@@ -29,13 +29,18 @@ function Recorder:insertPoint()
     local pos = self.player:GetWorldPosition()
 
     if self.positionType == 0 then
+        self.Utils.UIshowWarningMsg(Utils.stringifyVector(pos))
         table.insert(self.points, pos)
     else
         if next(self.points) == nil then
+            local initialPoint = Vector4.new(0, 0, 0, 1)
             self.relativePoint = pos
-            table.insert(self.points, Vector4.new(0, 0, 0, 1))
+            table.insert(self.points, initialPoint)
+            self.Utils.UIshowWarningMsg(Utils.stringifyVector(initialPoint))
         else
-            table.insert(self.points, Utils.calculateVector4Difference(pos, self.relativePoint))
+            local delta = Utils.calculateVector4Difference(pos, self.relativePoint)
+            table.insert(self.points, delta)
+            self.Utils.UIshowWarningMsg(Utils.stringifyVector(delta))
         end
     end
 end

@@ -4,6 +4,7 @@
 worldDataHelper = {
     GameUI = require("modules/external/GameUI"),
     UI = require('modules/UI'),
+    Recorder = require('modules/ui/Recorder'),
 
     renderUi = false,
     isOverlay = false,
@@ -40,9 +41,15 @@ function worldDataHelper:new()
         self.renderUi = not self.renderUi
     end)
 
+    registerHotkey('recorderAddPointKey', 'Recorder Add Point Key', function()
+        if self.Recorder ~= nil and self.Recorder.isStarted == true then
+            self.Recorder:insertPoint()
+        end
+    end)
+
     registerForEvent('onDraw', function()
         if self.inGame and not self.inMenu and self.renderUi then
-            UI:render()
+            self.UI:render()
         end
     end)
 end

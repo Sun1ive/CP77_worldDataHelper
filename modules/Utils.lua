@@ -4,6 +4,53 @@
 ---@field setCursorRelative function
 Utils = {}
 
+--- Helper function to stringify a vector
+--- @param vector table A vector object (Vector2, Vector3, Vector4)
+--- @return string The stringified vector
+function Utils.stringifyVector(vector)
+    local components = {}
+    for _, key in ipairs({"x", "y", "z"}) do
+        if vector[key] ~= nil then
+            table.insert(components, tostring(vector[key]))
+        end
+    end
+
+    return table.concat(components, ", ")
+end
+
+---Show warning message
+---@param msg string
+function Utils.UIshowWarningMsg(msg)
+    local text = gameSimpleScreenMessage.new()
+    text.duration = 1.0
+    text.message = msg
+    text.isInstant = true
+    text.isShown = true
+    Game.GetBlackboardSystem():Get(GetAllBlackboardDefs().UI_Notifications):SetVariant(
+        GetAllBlackboardDefs().UI_Notifications.WarningMessage, ToVariant(text), true)
+end
+
+---Show notification message
+---@param msg string
+function Utils.UIshowNotificationMsg(msg)
+    local text = gameSimpleScreenMessage.new()
+    text.duration = 1.0
+    text.message = msg
+    text.isInstant = true
+    text.isShown = true
+    Game.GetBlackboardSystem():Get(GetAllBlackboardDefs().UI_Notifications):SetVariant(
+        GetAllBlackboardDefs().UI_Notifications.OnscreenMessage, ToVariant(text), true)
+end
+
+---Round float
+---@param value number
+---@param precision integer -- 1 | 2 | 3 | 4 | etc
+function Utils.roundFloat(value, precision)
+    local formatStr = string.format("%%.%df", precision)
+    local converted = tonumber(string.format(formatStr, value))
+    return converted
+end
+
 ---Calculates the difference between two Vector4 coordinates.
 ---@param v1 Vector4 The first vector
 ---@param v2 Vector4 The second vector
@@ -14,10 +61,10 @@ function Utils.calculateVector4Difference(v1, v2)
         error("Both vectors must be provided.")
     end
 
-    -- Calculate the differences for each component
-    local diff = Vector4.new((v1.x - v2.x), (v1.y - v2.y), (v1.z - v2.z), 1)
+    local x1, y1, z1 = Utils.roundFloat(v1.x, 4), Utils.roundFloat(v1.y, 4), Utils.roundFloat(v1.z, 4)
+    local x2, y2, z2 = Utils.roundFloat(v2.x, 4), Utils.roundFloat(v2.y, 4), Utils.roundFloat(v2.z, 4)
 
-    return diff
+    return Vector4.new(x1 - x2, y1 - y2, z1 - z2, 1.0)
 end
 
 ---@return number
