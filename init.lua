@@ -27,6 +27,7 @@ function worldDataHelper:new()
         end)
 
         self.inGame = not self.GameUI.IsDetached()
+
     end)
 
     registerForEvent("onOverlayOpen", function()

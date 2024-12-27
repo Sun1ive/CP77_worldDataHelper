@@ -7,6 +7,7 @@
 Recorder = {
     Utils = require('modules/Utils'),
     Exporter = require('modules/classes/Exporter'),
+    Spawner = require('modules/classes/Spawner'),
 
     ---@type Vector4[]
     points = {},
@@ -23,10 +24,25 @@ function Recorder:cleanUpPoints()
         self.points[key] = nil
     end
     self.relativePoint = nil
+    Spawner:cleanUp()
+    local service = GameInstance.GetScriptableServiceContainer():GetService("WorldStreamingService")
+    service:ClearSpline()
+end
+
+function Recorder.Test()
+    local service = GameInstance.GetScriptableServiceContainer():GetService("WorldStreamingService")
+    Game.GetPlayer():ATestSpawn1("Character.Panam")
 end
 
 function Recorder:insertPoint()
     local pos = self.player:GetWorldPosition()
+    local service = GameInstance.GetScriptableServiceContainer():GetService("WorldStreamingService")
+
+    if not self.Spawner.initialized then
+        self.Spawner:Init()
+    else
+        self.Spawner:spawn()
+    end
 
     if self.positionType == 0 then
         self.Utils.UIshowWarningMsg(Utils.stringifyVector(pos))
@@ -37,10 +53,12 @@ function Recorder:insertPoint()
             self.relativePoint = pos
             table.insert(self.points, initialPoint)
             self.Utils.UIshowWarningMsg(Utils.stringifyVector(initialPoint))
+            service:AddToSpline(Vector3.new(0, 0, 0))
         else
             local delta = Utils.calculateVector4Difference(pos, self.relativePoint)
             table.insert(self.points, delta)
             self.Utils.UIshowWarningMsg(Utils.stringifyVector(delta))
+            service:AddToSpline(Vector3.new(delta.x, delta.y, delta.z))
         end
     end
 end
@@ -76,7 +94,7 @@ function Recorder:render()
 
             if ImGui.Button("Stop record") then
                 self:insertPoint()
-                self.isStarted = false
+                -- self.isStarted = false
                 for _, pos in ipairs(self.points) do
                     print(string.format("Recorded Position: x=%.2f, y=%.2f, z=%.2f", pos.x, pos.y, pos.z))
                 end
@@ -92,7 +110,7 @@ function Recorder:render()
                 local str = array:ToString()
                 Exporter.saveFile('test.json', str)
 
-                self:cleanUpPoints()
+                self.Test()
             end
 
         end
@@ -102,7 +120,14 @@ function Recorder:render()
         ImGui.Separator()
 
         if self.isStarted and next(self.points) ~= nil then
-            for index, point in ipairs(self.points) do
+
+            ImGui.PushItemWidth(80 * self.viewSize)
+            if ImGui.Button("CleanUp") then
+                self:cleanUpPoints()
+            end
+            ImGui.PopItemWidth()
+
+            for _, point in ipairs(self.points) do
                 ImGui.PushItemWidth(80 * self.viewSize)
                 self.Utils.drawField("X", tostring(point.x), "%.4f")
                 ImGui.SameLine()
@@ -113,6 +138,7 @@ function Recorder:render()
                 ImGui.Separator()
             end
         end
+
     end
 end
 
