@@ -2,7 +2,37 @@
 ---@field tooltip function
 ---@field getViewSize function
 ---@field setCursorRelative function
+---@field parseUserData function
 Utils = {}
+
+--- parse userdata
+---@param t any
+function Utils.parseUserData(t)
+    local tstr = tostring(t)
+
+    if tstr:find('^ToCName{') then
+        tstr = NameToString(t)
+    elseif tstr:find('^userdata:') or tstr:find('^sol%.') then
+
+        local gdump = false
+        local ddump = false
+        pcall(function()
+            gdump = GameDump(t)
+        end)
+        pcall(function()
+            ddump = Dump(t, true)
+        end)
+
+        if gdump then
+            tstr = GameDump(t)
+        elseif ddump then
+            tstr = ddump
+        end
+    end
+
+    return tstr
+
+end
 
 --- Helper function to stringify a vector
 --- @param vector table A vector object (Vector2, Vector3, Vector4)
