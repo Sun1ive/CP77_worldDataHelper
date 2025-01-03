@@ -70,7 +70,8 @@ function Offsets:render(formatter, enableReplacer)
         ImGui.PopItemWidth()
 
         ImGui.PushItemWidth(100 * self.viewSize)
-        local result = Utils.calculateVector4Difference(self.to, self.from)
+
+        local result = Utils.calculateVector4DifferenceWithQuat(self.from, self.to, Quaternion.new(0, 0, 0, 1))
         self.Utils.drawField("ResultX", result.x, formatter, enableReplacer)
         ImGui.SameLine()
         self.Utils.drawField("ResultY", result.y, formatter, enableReplacer)

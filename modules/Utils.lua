@@ -5,6 +5,10 @@
 ---@field parseUserData function
 Utils = {}
 
+function Utils.isNotEmpty(value)
+    return value ~= nil and value ~= 0 and value ~= '' and value ~= 'None'
+end
+
 --- parse userdata
 ---@param t any
 function Utils.parseUserData(t)
@@ -81,22 +85,6 @@ function Utils.roundFloat(value, precision)
     return converted
 end
 
----Calculates the difference between two Vector4 coordinates.
----@param v1 Vector4 The first vector
----@param v2 Vector4 The second vector
----@return Vector4 DVector new Vector4 representing the difference between v1 and v2
-function Utils.calculateVector4Difference(v1, v2)
-    -- Ensure both vectors are provided
-    if not v1 or not v2 then
-        error("Both vectors must be provided.")
-    end
-
-    local x1, y1, z1 = Utils.roundFloat(v1.x, 4), Utils.roundFloat(v1.y, 4), Utils.roundFloat(v1.z, 4)
-    local x2, y2, z2 = Utils.roundFloat(v2.x, 4), Utils.roundFloat(v2.y, 4), Utils.roundFloat(v2.z, 4)
-
-    return Vector4.new(x1 - x2, y1 - y2, z1 - z2, 1.0)
-end
-
 ---@return number
 function Utils.getViewSize()
     return ImGui.GetFontSize() / 15
@@ -125,7 +113,7 @@ end
 ---@param vector Vector4 The Vector4 object being edited
 ---@return float
 function Utils.handleVector4Input(name, prop, vector)
-    local text = tostring(vector[prop])
+    local text = string.gsub(tostring(vector[prop]), " ", "")
     local input, updated = ImGui.InputTextWithHint("##" .. name .. prop, name .. " " .. prop, text, 256)
 
     if updated then
@@ -150,6 +138,81 @@ function Utils.drawField(name, prop, formatter, replace)
     end
     ImGui.InputTextWithHint("##" .. name, name, text, #text + 1, ImGuiInputTextFlags.ReadOnly)
     Utils.tooltip(name)
+end
+
+---Calculates the difference between two Vector4 coordinates, accounting for rotation using a quaternion.
+---@param v1 Vector4 The first vector (base point)
+---@param v2 Vector4 The second vector (target point)
+---@param rotationQuat Quaternion The quaternion representing rotation of v1 (using i, j, k, r)
+---@return Vector4 DVector new Vector4 representing the adjusted difference between v1 and v2
+function Utils.calculateVector4DifferenceWithQuat(v1, v2, rotationQuat)
+    -- Ensure both vectors are provided
+    if not v1 or not v2 then
+        error("Both vectors must be provided.")
+    end
+
+    -- Ensure a valid quaternion is provided
+    if not rotationQuat then
+        error("Rotation quaternion must be provided.")
+    end
+
+    -- Step 1: Calculate the raw difference
+    local dx = v2.x - v1.x
+    local dy = v2.y - v1.y
+    local dz = v2.z - v1.z
+    local rawDiff = Vector4.new(dx, dy, dz, 1.0)
+
+    -- Step 2: Apply the quaternion rotation to the raw difference
+    local adjustedDiff = Utils.rotateVectorByQuaternion(rawDiff, rotationQuat)
+
+    -- Step 3: Return the adjusted vector
+    return Vector4.new(Utils.roundFloat(adjustedDiff.x, 4), Utils.roundFloat(adjustedDiff.y, 4),
+        Utils.roundFloat(adjustedDiff.z, 4), 1.0)
+end
+
+---Rotates a Vector4 by a given quaternion.
+---@param vec Vector4 The vector to rotate
+---@param quat Quaternion The quaternion to use for rotation (using i, j, k, r)
+---@return Vector4 The rotated vector
+function Utils.rotateVectorByQuaternion(vec, quat)
+    -- Quaternion rotation formula: v' = q * v * q^-1
+    local qi, qj, qk, qr = quat.i, quat.j, quat.k, quat.r
+    local vx, vy, vz = vec.x, vec.y, vec.z
+
+    -- Quaternion-vector multiplication
+    local ix = qr * vx + qj * vz - qk * vy
+    local iy = qr * vy + qk * vx - qi * vz
+    local iz = qr * vz + qi * vy - qj * vx
+    local iw = -qi * vx - qj * vy - qk * vz
+
+    -- Conjugate of the quaternion
+    local ci = -qi
+    local cj = -qj
+    local ck = -qk
+    local cr = qr
+
+    -- Quaternion-vector-conjugate multiplication
+    local rx = ix * cr + iw * ci + iy * ck - iz * cj
+    local ry = iy * cr + iw * cj + iz * ci - ix * ck
+    local rz = iz * cr + iw * ck + ix * cj - iy * ci
+
+    -- Return the rotated vector
+    return Vector4.new(rx, ry, rz, vec.w)
+end
+
+-- credit to psiberx
+function Utils.parseLookupHash(lookupQuery)
+    local lookupHex = lookupQuery:match('^0x([0-9A-F]+)$')
+    if lookupHex ~= nil then
+        return loadstring('return 0x' .. lookupHex .. 'ULL', '')()
+    end
+
+    local lookupDec = lookupQuery:match('^(%d+)ULL$') or lookupQuery:match('^(%d+)$')
+    if lookupDec ~= nil then
+        return loadstring('return ' .. lookupDec .. 'ULL', '')()
+    end
+
+    return nil
 end
 
 return Utils;

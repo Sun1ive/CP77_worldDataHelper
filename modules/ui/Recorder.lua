@@ -55,7 +55,7 @@ function Recorder:insertPoint()
             self.Utils.UIshowWarningMsg(Utils.stringifyVector(initialPoint))
             service:AddToSpline(Vector3.new(0, 0, 0))
         else
-            local delta = Utils.calculateVector4Difference(pos, self.relativePoint)
+            local delta = Utils.calculateVector4DifferenceWithQuat(self.relativePoint, pos, Quaternion.new(0,0,0,1))
             table.insert(self.points, delta)
             self.Utils.UIshowWarningMsg(Utils.stringifyVector(delta))
             service:AddToSpline(Vector3.new(delta.x, delta.y, delta.z))
