@@ -1,21 +1,31 @@
-Exporter = {}
+---@class Exporter
+local Exporter = {}
 
+---Check if a file exists
+---@param filename string
+---@return boolean
 function Exporter.fileExists(filename)
     local f = io.open(filename, "r")
-    if (f ~= nil) then
+    if f ~= nil then
         io.close(f)
         return true
-    else
-        return false
     end
+    return false
 end
 
+---Save string content to a file path
+---@param path string
+---@param data string
+---@return boolean success
+---@return string? errorMsg
 function Exporter.saveFile(path, data)
-    local file = io.open(path, "w")
-    if (file ~= nil) then
-        file:write(data)
-        file:close()
+    local file, err = io.open(path, "w")
+    if not file then
+        return false, err or "Failed to open file for writing"
     end
+    file:write(data)
+    file:close()
+    return true, nil
 end
 
 return Exporter

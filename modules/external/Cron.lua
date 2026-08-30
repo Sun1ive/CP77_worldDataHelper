@@ -6,14 +6,13 @@ Copyright (c) 2021 psiberx
 ]]
 
 local Cron = { version = '1.0.2' }
-
 local timers = {}
 local counter = 0
 
 ---@param timeout number
 ---@param recurring boolean
 ---@param callback function
----@param args
+---@param args any
 ---@return any
 local function addTimer(timeout, recurring, callback, args)
     if type(timeout) ~= 'number' then
