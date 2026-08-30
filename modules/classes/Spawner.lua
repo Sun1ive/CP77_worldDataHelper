@@ -5,13 +5,15 @@
 ---@field attachCallbacks table List of attach callbacks by entity hash
 ---@field redProxy table? RedProxy callback container
 ---@field initialized boolean
+---@field markerTag string
 local Spawner = {
     emptyEntity = "base\\quest\\main_quests\\part1\\q115\\test\\empty_entity.ent",
     mesh = "engine\\meshes\\editor\\markers\\review\\review_flag_open.w2mesh",
     spawnedList = {},
     attachCallbacks = {},
     redProxy = nil,
-    initialized = false
+    initialized = false,
+    markerTag = "CP77_worldDataHelper_Marker"
 }
 
 function Spawner:Init()
@@ -66,11 +68,20 @@ end
 
 ---Despawn all active in-world marker entities
 function Spawner:cleanUp()
+    local dynamicSystem = Game.GetDynamicEntitySystem()
     local staticSystem = Game.GetStaticEntitySystem()
-    if staticSystem and next(self.spawnedList) ~= nil then
+
+    if next(self.spawnedList) ~= nil then
         for _, entityID in ipairs(self.spawnedList) do
             pcall(function()
-                staticSystem:DespawnEntity(entityID)
+                if dynamicSystem then
+                    dynamicSystem:DeleteEntity(entityID)
+                end
+            end)
+            pcall(function()
+                if staticSystem then
+                    staticSystem:DespawnEntity(entityID)
+                end
             end)
         end
     end
@@ -110,14 +121,27 @@ function Spawner:spawn(pos, orientation)
 
     local entityID = nil
     pcall(function()
-        local spec = StaticEntitySpec.new()
-        spec.templatePath = ResRef.FromString(self.emptyEntity)
-        spec.position = pos
-        spec.orientation = orientation
-        spec.attached = true
-        spec.appearanceName = CName.new("default")
+        local dynamicSystem = Game.GetDynamicEntitySystem()
+        if dynamicSystem then
+            local spec = DynamicEntitySpec.new()
+            spec.templatePath = self.emptyEntity
+            spec.position = Vector4.new(pos.x, pos.y, pos.z, 1.0)
+            spec.orientation = orientation
+            spec.alwaysSpawned = true
+            spec.tags = { self.markerTag }
 
-        entityID = Game.GetStaticEntitySystem():SpawnEntity(spec)
+            entityID = dynamicSystem:CreateEntity(spec)
+        else
+            local spec = StaticEntitySpec.new()
+            spec.templatePath = ResRef.FromString(self.emptyEntity)
+            spec.position = pos
+            spec.orientation = orientation
+            spec.attached = true
+            spec.appearanceName = CName.new("default")
+
+            entityID = Game.GetStaticEntitySystem():SpawnEntity(spec)
+        end
+
         if entityID then
             table.insert(self.spawnedList, entityID)
             self:RegisterCallback(entityID, function(entity)

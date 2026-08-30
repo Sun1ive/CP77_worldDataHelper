@@ -17,6 +17,9 @@ local worldDataHelper = {
 function worldDataHelper:new()
     registerForEvent("onInit", function()
         self.CodewareProxy:Init()
+        if self.Recorder and self.Recorder.ActorSpawner then
+            self.Recorder.ActorSpawner:init()
+        end
         print(string.format("[CP77_worldDataHelper] Initialized v%s", self.UI.version or "0.0.1"))
 
         Observe('RadialWheelController', 'OnIsInMenuChanged', function(_, isInMenu)

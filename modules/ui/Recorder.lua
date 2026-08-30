@@ -137,12 +137,12 @@ end
 function Recorder:render()
     self.viewSize = self.Utils.getViewSize()
 
-    if ImGui.CollapsingHeader("Spline / Waypoint Recorder") then
-        ImGui.PushItemWidth(100 * self.viewSize)
-        self.positionType = ImGui.RadioButton("Absolute", self.positionType, 0)
-        ImGui.SameLine()
-        self.positionType = ImGui.RadioButton("Relative", self.positionType, 1)
-        ImGui.PopItemWidth()
+    ImGui.TextColored(0.4, 0.8, 1.0, 1.0, "Spline Coordinate Mode:")
+    ImGui.PushItemWidth(100 * self.viewSize)
+    self.positionType = ImGui.RadioButton("Absolute", self.positionType, 0)
+    ImGui.SameLine()
+    self.positionType = ImGui.RadioButton("Relative", self.positionType, 1)
+    ImGui.PopItemWidth()
 
         ImGui.Separator()
 
@@ -258,6 +258,15 @@ function Recorder:render()
                 local anchorOrient = self.relativeOrient or (player and player:GetWorldOrientation())
                 self.ActorSpawner:startSplineTest(self.points, self.positionType, anchorPos, anchorOrient)
             end
+            ImGui.SameLine()
+            if ImGui.Button("Spawn at WP #1") then
+                local player = Game.GetPlayer()
+                local anchorPos = self.relativePoint or (player and player:GetWorldPosition())
+                local anchorOrient = self.relativeOrient or (player and player:GetWorldOrientation()) or Quaternion.new(0, 0, 0, 1)
+                local resolvedPoints = self.ActorSpawner:resolveWorldPoints(self.points, self.positionType, anchorPos, anchorOrient)
+                local spawnPos = (#resolvedPoints > 0) and resolvedPoints[1] or anchorPos
+                self.ActorSpawner:spawnActor(self.ActorSpawner.characterRecord, spawnPos, anchorOrient)
+            end
         else
             if self.ActorSpawner.isPaused then
                 if ImGui.Button("Resume") then
@@ -270,7 +279,7 @@ function Recorder:render()
             end
             ImGui.SameLine()
             if ImGui.Button("Stop Test") then
-                self.ActorSpawner:despawnActor()
+                self.ActorSpawner:stopSplineTest()
             end
         end
 
@@ -279,17 +288,8 @@ function Recorder:render()
             self.ActorSpawner:despawnActor()
         end
 
-        -- Progress Status
-        if self.ActorSpawner.isTesting then
-            local statusText = string.format("Status: Moving to Waypoint #%d of %d (%s)",
-                self.ActorSpawner.currentPointIndex, #self.ActorSpawner.points, self.ActorSpawner.moveSpeed)
-            if self.ActorSpawner.isPaused then
-                statusText = string.format("Status: PAUSED at Waypoint #%d of %d",
-                    self.ActorSpawner.currentPointIndex, #self.ActorSpawner.points)
-            end
-            ImGui.TextColored(0.2, 0.9, 0.3, 1.0, statusText)
-        end
-    end
+        -- Live Actor Debug Monitor
+        self.ActorSpawner:renderDebugPanel(self.viewSize)
 end
 
 return Recorder

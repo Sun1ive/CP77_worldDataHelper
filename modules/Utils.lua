@@ -170,29 +170,56 @@ function Utils.drawField(name, prop, formatter, replace)
     Utils.tooltip(name)
 end
 
----Calculates the difference between two Vector4 coordinates accounting for quaternion rotation
+---Return the conjugate (inverse for unit quaternion) of a quaternion
+---@param quat Quaternion
+---@return Quaternion
+function Utils.getQuaternionConjugate(quat)
+    return Quaternion.new(-quat.i, -quat.j, -quat.k, quat.r)
+end
+
+---Transform a world space position into the local coordinate frame of an anchor
+---@param anchorPos Vector4 World position of anchor
+---@param anchorQuat Quaternion Orientation of anchor
+---@param worldPos Vector4 World position to transform
+---@return Vector4 Local delta relative to anchor
+function Utils.worldToLocal(anchorPos, anchorQuat, worldPos)
+    local rawDiff = Vector4.new(worldPos.x - anchorPos.x, worldPos.y - anchorPos.y, worldPos.z - anchorPos.z, 1.0)
+    local invQuat = Utils.getQuaternionConjugate(anchorQuat)
+    local localVec = Utils.rotateVectorByQuaternion(rawDiff, invQuat)
+    return Vector4.new(
+        Utils.roundFloat(localVec.x, 4),
+        Utils.roundFloat(localVec.y, 4),
+        Utils.roundFloat(localVec.z, 4),
+        1.0
+    )
+end
+
+---Transform a local coordinate offset back into world space
+---@param anchorPos Vector4 World position of anchor
+---@param anchorQuat Quaternion Orientation of anchor
+---@param localPos Vector4 Local offset
+---@return Vector4 World position
+function Utils.localToWorld(anchorPos, anchorQuat, localPos)
+    local rotated = Utils.rotateVectorByQuaternion(localPos, anchorQuat)
+    return Vector4.new(
+        anchorPos.x + rotated.x,
+        anchorPos.y + rotated.y,
+        anchorPos.z + rotated.z,
+        1.0
+    )
+end
+
+---Calculates the local difference between two Vector4 coordinates accounting for quaternion rotation
 ---@param v1 Vector4 Base point
 ---@param v2 Vector4 Target point
 ---@param rotationQuat Quaternion? Rotation quaternion of v1 (default identity)
----@return Vector4
+---@return Vector4 Local delta from v1 to v2
 function Utils.calculateVector4DifferenceWithQuat(v1, v2, rotationQuat)
     if not v1 or not v2 then
         error("Both vectors must be provided.")
     end
     rotationQuat = rotationQuat or Quaternion.new(0, 0, 0, 1)
-
-    local dx = v2.x - v1.x
-    local dy = v2.y - v1.y
-    local dz = v2.z - v1.z
-    local rawDiff = Vector4.new(dx, dy, dz, 1.0)
-
-    local adjustedDiff = Utils.rotateVectorByQuaternion(rawDiff, rotationQuat)
-    return Vector4.new(
-        Utils.roundFloat(adjustedDiff.x, 4),
-        Utils.roundFloat(adjustedDiff.y, 4),
-        Utils.roundFloat(adjustedDiff.z, 4),
-        1.0
-    )
+    return Utils.worldToLocal(v1, rotationQuat, v2)
 end
 
 ---Rotates a Vector4 by a given quaternion: v' = q * v * q^-1
