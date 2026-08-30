@@ -1,7 +1,7 @@
 ---@class worldDataHelper
 ---@field formatter string
 ---@field channel integer
-worldDataHelper = {
+local worldDataHelper = {
     GameUI = require("modules/external/GameUI"),
     UI = require('modules/UI'),
     Recorder = require('modules/ui/Recorder'),
@@ -17,23 +17,27 @@ worldDataHelper = {
 function worldDataHelper:new()
     registerForEvent("onInit", function()
         self.CodewareProxy:Init()
+        print(string.format("[CP77_worldDataHelper] Initialized v%s", self.UI.version or "0.0.1"))
+
         Observe('RadialWheelController', 'OnIsInMenuChanged', function(_, isInMenu)
             self.inMenu = isInMenu
         end)
 
         self.GameUI.OnSessionStart(function()
             self.inGame = true
-            print("====Session start");
+            print("[CP77_worldDataHelper] Session start")
         end)
 
         self.GameUI.OnSessionEnd(function()
             self.inGame = false
             self.CodewareProxy:Stop()
-            print("====Session end");
+            if self.Recorder and self.Recorder.ActorSpawner then
+                self.Recorder.ActorSpawner:despawnActor()
+            end
+            print("[CP77_worldDataHelper] Session end")
         end)
 
         self.inGame = not self.GameUI.IsDetached()
-
     end)
 
     registerForEvent("onOverlayOpen", function()
@@ -42,6 +46,12 @@ function worldDataHelper:new()
 
     registerForEvent("onOverlayClose", function()
         self.isOverlay = false
+    end)
+
+    registerForEvent("onUpdate", function(dt)
+        if self.inGame and not self.inMenu and self.Recorder then
+            self.Recorder:update(dt)
+        end
     end)
 
     registerHotkey('renderUi', 'Render UI Key', function()
@@ -55,10 +65,12 @@ function worldDataHelper:new()
     end)
 
     registerForEvent('onDraw', function()
-        if self.inGame and not self.inMenu and self.renderUi then
+        if (self.isOverlay or self.renderUi) and self.inGame and not self.inMenu then
             self.UI:render()
         end
     end)
+
+    return self
 end
 
 return worldDataHelper:new()

@@ -1,12 +1,10 @@
---- func desc
---- @class Proxy Proxy
---- @field instance? any
---- @field callbacks table list of callbacks
---- @field initialized boolean state of proxy
---- @field streamingSectorResource? redResourceReferenceScriptToken of proxy
-Proxy = {
+---@class Proxy
+---@field instance any
+---@field callbacks table
+---@field initialized boolean
+---@field streamingSectorResource any
+local Proxy = {
     Utils = require('modules/Utils'),
-
     instance = nil,
     streamingSectorResource = nil,
     callbacks = {},
@@ -20,50 +18,45 @@ function Proxy:Stop()
 end
 
 function Proxy:Init()
-    self.streamingSectorResource = ResRef.FromString("mod\\worlds\\vehicle_sunset_test.streamingsector")
-    self.instance = NewProxy({
-        OnAfterAttach = {
-            args = {'handle:EntityLifecycleEvent'},
-            callback = function(event)
-                if not event then
-                    return
-                end
+    if self.initialized then
+        return
+    end
 
-                local entity = event:GetEntity()
-
-                if not entity then
-                    return
+    pcall(function()
+        self.streamingSectorResource = ResRef.FromString("mod\\worlds\\vehicle_sunset_test.streamingsector")
+        self.instance = NewProxy({
+            OnAfterAttach = {
+                args = {'handle:EntityLifecycleEvent'},
+                callback = function(event)
+                    if not event then return end
+                    local entity = event:GetEntity()
+                    if not entity then return end
+                    print("[CP77_worldDataHelper] Entity Attached: " .. tostring(entity:GetEntityID().hash))
                 end
-
-                print("Entity Attached " .. entity.GetEntity().GetEntityID())
-            end
-        },
-        OnResourceReady = {
-            args = {'handle:ResourceEvent'},
-            callback = function(event)
-                print("CET ON RESOURCE")
-                if not event then
-                    return
+            },
+            OnResourceReady = {
+                args = {'handle:ResourceEvent'},
+                callback = function(event)
+                    if not event then return end
+                    local resource = event:GetResource()
+                    if not resource then return end
+                    print("[CP77_worldDataHelper] Sector Resource Ready")
+                    for _, value in ipairs(resource:GetNodes()) do
+                        print(self.Utils.parseUserData(value))
+                    end
                 end
-                local resource = event:GetResource()
-                if not resource then
-                    return
-                end
-                for index, value in ipairs(resource:GetNodes()) do
-                    print(value)
-                    print(Utils.parseUserData(value))
-                end
-            end
-        }
-    })
-    -- cbSystem:RegisterCallback('Entity/Attached', self.instance:Target(), self.instance:Function('OnAfterAttach'), true)
-    --     :AddTarget(DynamicEntityTarget:Tag("MyMod"))
+            }
+        })
 
-    Game.GetCallbackSystem():RegisterCallback("Resource/Ready", self.instance:Target(),
-        self.instance:Function("OnResourceReady"), true):AddTarget(ResourceTarget.Path(self.streamingSectorResource))
-        :SetRunMode(2)
-
-    self.initialized = true;
+        local cbSystem = Game.GetCallbackSystem()
+        if cbSystem and self.instance then
+            cbSystem:RegisterCallback("Resource/Ready", self.instance:Target(),
+                self.instance:Function("OnResourceReady"), true)
+                :AddTarget(ResourceTarget.Path(self.streamingSectorResource))
+                :SetRunMode(2)
+            self.initialized = true
+        end
+    end)
 end
 
-return Proxy;
+return Proxy
