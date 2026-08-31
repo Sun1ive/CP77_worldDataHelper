@@ -77,7 +77,7 @@ function Widget:render(isOverlay, parentFormatter, parentReplacer)
     local activeFmt = self.formatter or parentFormatter or "%.3f"
     local activeReplacer = (parentReplacer ~= nil) and parentReplacer or self.enableReplacer
 
-    local windowFlags = ImGuiWindowFlags.AlwaysAutoResize + ImGuiWindowFlags.NoCollapse
+    local windowFlags = ImGuiWindowFlags.AlwaysAutoResize + ImGuiWindowFlags.NoCollapse + ImGuiWindowFlags.NoTitleBar
     if self.locked then
         windowFlags = windowFlags + ImGuiWindowFlags.NoMove + ImGuiWindowFlags.NoResize
     end
