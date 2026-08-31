@@ -11,6 +11,7 @@ local Recorder = {
     Exporter = require('modules/classes/Exporter'),
     Spawner = require('modules/classes/Spawner'),
     ActorSpawner = require('modules/classes/ActorSpawner'),
+    SpeedGenerator = require('modules/classes/SpeedGenerator'),
 
     ---@type Vector4[]
     points = {},
@@ -65,8 +66,8 @@ function Recorder:insertPoint()
     local pos = player:GetWorldPosition()
     local orient = player:GetWorldOrientation()
 
-    -- Spawn visual in-world marker
-    self.Spawner:spawn(pos, orient)
+    -- Spawn visual in-world marker with directional arrow & light
+    self.Spawner:spawn(pos, orient, #self.points + 1)
 
     -- Attempt to update streaming service if available
     local function updateSplineService(splineVec)
@@ -114,9 +115,23 @@ function Recorder:exportData()
     end
 
     local modeStr = self.positionType == 0 and "absolute" or "relative"
-    local jsonStr = string.format("{\n  \"mode\": \"%s\",\n  \"count\": %d,\n  \"points\": [\n%s\n  ]\n}",
-        modeStr, #self.points, table.concat(array, ",\n"))
+    local speedSections = self.SpeedGenerator and self.SpeedGenerator:toWolvenKitData() or {}
 
+    local exportTable = {
+        mode = modeStr,
+        count = #self.points,
+        points = {}
+    }
+
+    for i, pt in ipairs(self.points) do
+        table.insert(exportTable.points, { index = i, x = pt.x, y = pt.y, z = pt.z })
+    end
+
+    if #speedSections > 0 then
+        exportTable.speedChangeSections = speedSections
+    end
+
+    local jsonStr = json.encode(exportTable)
     local success, err = self.Exporter.saveFile(self.exportFileName, jsonStr)
     if success then
         print(string.format("[CP77_worldDataHelper] Exported %d points to %s", #self.points, self.exportFileName))

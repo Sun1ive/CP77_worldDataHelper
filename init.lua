@@ -5,6 +5,7 @@ local worldDataHelper = {
     GameUI = require("modules/external/GameUI"),
     UI = require('modules/UI'),
     Recorder = require('modules/ui/Recorder'),
+    Widget = require('modules/ui/Widget'),
 
     CodewareProxy = require('modules/Codeware/Proxy'),
 
@@ -61,6 +62,12 @@ function worldDataHelper:new()
         self.renderUi = not self.renderUi
     end)
 
+    registerHotkey('toggleWidget', 'Toggle Coordinates Widget Key', function()
+        if self.Widget then
+            self.Widget.visible = not self.Widget.visible
+        end
+    end)
+
     registerHotkey('recorderAddPointKey', 'Recorder Add Point Key', function()
         if self.Recorder ~= nil and self.Recorder.isStarted == true then
             self.Recorder:insertPoint()
@@ -68,8 +75,13 @@ function worldDataHelper:new()
     end)
 
     registerForEvent('onDraw', function()
-        if (self.isOverlay or self.renderUi) and self.inGame and not self.inMenu then
-            self.UI:render()
+        if self.inGame and not self.inMenu then
+            if self.isOverlay or self.renderUi then
+                self.UI:render()
+            end
+            if self.Widget and self.Widget.visible then
+                self.Widget:render(self.isOverlay, self.UI.formatter, self.UI.enableReplacer)
+            end
         end
     end)
 

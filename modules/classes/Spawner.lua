@@ -1,6 +1,7 @@
 ---@class Spawner
 ---@field emptyEntity string Path to empty entity template
----@field mesh string Path to marker mesh
+---@field markerMesh string Path to 3D marker diamond mesh
+---@field arrowMesh string Path to directional arrow/flag mesh
 ---@field spawnedList table List of spawned entity IDs
 ---@field attachCallbacks table List of attach callbacks by entity hash
 ---@field redProxy table? RedProxy callback container
@@ -8,7 +9,8 @@
 ---@field markerTag string
 local Spawner = {
     emptyEntity = "base\\quest\\main_quests\\part1\\q115\\test\\empty_entity.ent",
-    mesh = "engine\\meshes\\editor\\markers\\review\\review_flag_open.w2mesh",
+    markerMesh = "base\\environment\\ld_kit\\marker.mesh",
+    arrowMesh = "engine\\meshes\\editor\\markers\\review\\review_flag_open.w2mesh",
     spawnedList = {},
     attachCallbacks = {},
     redProxy = nil,
@@ -53,16 +55,42 @@ function Spawner:Init()
     end)
 end
 
----Attach marker mesh component to entity on assembly
+---Attach high-visibility marker components, directional arrow, and glow light to entity on assembly
 ---@param entity any
-function Spawner:onAssemble(entity)
+---@param pointIndex integer?
+function Spawner:onAssemble(entity, pointIndex)
     pcall(function()
-        local component = entMeshComponent.new()
-        component.name = CName.new("marker_mesh")
-        component.mesh = ResRef.FromString(self.mesh)
-        component.visualScale = Vector3.new(1.0, 1.0, 1.0)
-        component.meshAppearance = CName.new("default")
-        entity:AddComponent(component)
+        local idx = pointIndex or 1
+        local isFirst = (idx == 1)
+
+        local colorApp = isFirst and "green" or "yellow"
+        local lightR = isFirst and 40 or 255
+        local lightG = isFirst and 255 or 210
+        local lightB = isFirst and 90 or 40
+
+        -- 1. High-Visibility 3D Marker Diamond
+        local markerComponent = entMeshComponent.new()
+        markerComponent.name = CName.new("marker_diamond")
+        markerComponent.mesh = ResRef.FromString(self.markerMesh)
+        markerComponent.visualScale = Vector3.new(0.025, 0.025, 0.025)
+        markerComponent.meshAppearance = CName.new(colorApp)
+        entity:AddComponent(markerComponent)
+
+        -- 2. Directional Review Flag / Arrow (Oriented along player's heading)
+        local arrowComponent = entMeshComponent.new()
+        arrowComponent.name = CName.new("marker_arrow")
+        arrowComponent.mesh = ResRef.FromString(self.arrowMesh)
+        arrowComponent.visualScale = Vector3.new(1.2, 1.2, 1.2)
+        arrowComponent.meshAppearance = CName.new("default")
+        entity:AddComponent(arrowComponent)
+
+        -- 3. Ambient Glow Point Light for High Visibility at Distance & in Dark
+        local lightComponent = entPointLightComponent.new()
+        lightComponent.name = CName.new("marker_glow")
+        lightComponent.color = Color.new({ Red = lightR, Green = lightG, Blue = lightB, Alpha = 255 })
+        lightComponent.radius = 2.5
+        lightComponent.intensity = 15.0
+        entity:AddComponent(lightComponent)
     end)
 end
 
@@ -85,6 +113,13 @@ function Spawner:cleanUp()
             end)
         end
     end
+
+    pcall(function()
+        if dynamicSystem then
+            dynamicSystem:DeleteTagged(self.markerTag)
+        end
+    end)
+
     self.spawnedList = {}
     self.attachCallbacks = {}
 end
@@ -101,8 +136,9 @@ end
 ---Spawn a visual marker entity at the given position and orientation (or player pos)
 ---@param pos Vector4?
 ---@param orientation Quaternion?
+---@param pointIndex integer?
 ---@return entEntityID?
-function Spawner:spawn(pos, orientation)
+function Spawner:spawn(pos, orientation, pointIndex)
     if not self.initialized then
         self:Init()
     end
@@ -120,6 +156,8 @@ function Spawner:spawn(pos, orientation)
     end
 
     local entityID = nil
+    local targetIdx = pointIndex or (#self.spawnedList + 1)
+
     pcall(function()
         local dynamicSystem = Game.GetDynamicEntitySystem()
         if dynamicSystem then
@@ -145,7 +183,7 @@ function Spawner:spawn(pos, orientation)
         if entityID then
             table.insert(self.spawnedList, entityID)
             self:RegisterCallback(entityID, function(entity)
-                self:onAssemble(entity)
+                self:onAssemble(entity, targetIdx)
             end)
         end
     end)

@@ -10,6 +10,8 @@ local UI = {
     Teleport = require('modules/ui/Teleport'),
     Offsets = require('modules/ui/Offsets'),
     Recorder = require('modules/ui/Recorder'),
+    SpeedSections = require('modules/ui/SpeedSections'),
+    Widget = require('modules/ui/Widget'),
 
     tppToggle = false,
     formatType = 0,
@@ -28,11 +30,16 @@ function UI:render()
         return
     end
 
+    -- Link recorder to speed sections
+    if not self.SpeedSections.Recorder then
+        self.SpeedSections:init(self.Recorder)
+    end
+
     local position = player:GetWorldPosition()
     local orient = player:GetWorldOrientation()
 
     ImGui.SetNextWindowPos(120, 120, ImGuiCond.FirstUseEver)
-    ImGui.SetNextWindowSize(480 * self.viewSize, 560 * self.viewSize, ImGuiCond.FirstUseEver)
+    ImGui.SetNextWindowSize(520 * self.viewSize, 580 * self.viewSize, ImGuiCond.FirstUseEver)
 
     if ImGui.Begin("World Data Helper v" .. self.version) then
         ImGui.PushStyleColor(ImGuiCol.Text, 0xFFA5A19B)
@@ -52,13 +59,17 @@ function UI:render()
                 ImGui.SameLine()
                 self.formatType = ImGui.RadioButton("%.4f", self.formatType, 1)
                 ImGui.SameLine()
-                self.formatType = ImGui.RadioButton("%.2f", self.formatType, 2)
+                self.formatType = ImGui.RadioButton("%.3f", self.formatType, 2)
+                ImGui.SameLine()
+                self.formatType = ImGui.RadioButton("%.2f", self.formatType, 3)
                 ImGui.PopItemWidth()
 
                 if self.formatType == 0 then
                     self.formatter = "%.9f"
                 elseif self.formatType == 1 then
                     self.formatter = "%.4f"
+                elseif self.formatType == 2 then
+                    self.formatter = "%.3f"
                 else
                     self.formatter = "%.2f"
                 end
@@ -131,6 +142,22 @@ function UI:render()
                     end)
                 end
 
+                ImGui.Separator()
+
+                -- Coordinates HUD Widget Settings
+                ImGui.TextColored(0.4, 0.8, 1.0, 1.0, "Coordinates Widget (HUD):")
+                self.Widget.visible = ImGui.Checkbox("Show On-Screen Widget", self.Widget.visible)
+                ImGui.SameLine()
+                self.Widget.compact = ImGui.Checkbox("Compact Mode", self.Widget.compact)
+                ImGui.SameLine()
+                self.Widget.locked = ImGui.Checkbox("Lock Position", self.Widget.locked)
+
+                if self.Widget.visible then
+                    self.Widget.showYaw = ImGui.Checkbox("Show Heading (Yaw)", self.Widget.showYaw)
+                    ImGui.SameLine()
+                    self.Widget.showOrientation = ImGui.Checkbox("Show Quaternion", self.Widget.showOrientation)
+                end
+
                 ImGui.EndTabItem()
             end
 
@@ -144,7 +171,16 @@ function UI:render()
             end
 
             -- -------------------------------------------------------------
-            -- TAB 3: Offsets Calculator
+            -- TAB 3: Speed Sections Generator & Editor
+            -- -------------------------------------------------------------
+            if ImGui.BeginTabItem("Speed Sections") then
+                ImGui.Spacing()
+                self.SpeedSections:render()
+                ImGui.EndTabItem()
+            end
+
+            -- -------------------------------------------------------------
+            -- TAB 4: Offsets Calculator
             -- -------------------------------------------------------------
             if ImGui.BeginTabItem("Offsets Calculator") then
                 ImGui.Spacing()
@@ -153,7 +189,7 @@ function UI:render()
             end
 
             -- -------------------------------------------------------------
-            -- TAB 4: Teleport Player
+            -- TAB 5: Teleport Player
             -- -------------------------------------------------------------
             if ImGui.BeginTabItem("Teleport") then
                 ImGui.Spacing()
