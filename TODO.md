@@ -2,5 +2,5 @@
 - create a scene .json file from specific template
 - try to modify on fly static marker and other points
 - add dummy archive file to the project (.streamingsector and stuff)
-- generate a lot of speedChangeSections for splines
+- [x] generate a lot of speedChangeSections for splines
 - fix for vehicles
