@@ -22,7 +22,7 @@
 local Teleport = {
     Utils = require('modules/Utils'),
     Exporter = require('modules/classes/Exporter'),
-    destination = Vector4.new(0, 0, 0, 1),
+    destination = { x = 0, y = 0, z = 0, w = 1 },
     destinationType = 0,
     viewSize = 0,
     nodeRef = '',

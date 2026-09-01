@@ -5,9 +5,9 @@
 ---@field viewSize number
 local Offsets = {
     Utils = require('modules/Utils'),
-    from = Vector4.new(0, 0, 0, 1),
-    to = Vector4.new(0, 0, 0, 1),
-    result = Vector4.new(0, 0, 0, 1),
+    from = { x = 0, y = 0, z = 0, w = 1 },
+    to = { x = 0, y = 0, z = 0, w = 1 },
+    result = { x = 0, y = 0, z = 0, w = 1 },
     viewSize = 0
 }
 

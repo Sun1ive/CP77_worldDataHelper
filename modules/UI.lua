@@ -164,37 +164,45 @@ function UI:render()
             -- -------------------------------------------------------------
             -- TAB 2: Spline Recorder & Test Actor
             -- -------------------------------------------------------------
-            if ImGui.BeginTabItem("Spline Recorder") then
-                ImGui.Spacing()
-                self.Recorder:render()
-                ImGui.EndTabItem()
+            if self.Recorder and self.Recorder.render then
+                if ImGui.BeginTabItem("Spline Recorder") then
+                    ImGui.Spacing()
+                    self.Recorder:render()
+                    ImGui.EndTabItem()
+                end
             end
 
             -- -------------------------------------------------------------
             -- TAB 3: Speed Sections Generator & Editor
             -- -------------------------------------------------------------
-            if ImGui.BeginTabItem("Speed Sections") then
-                ImGui.Spacing()
-                self.SpeedSections:render()
-                ImGui.EndTabItem()
+            if self.SpeedSections and self.SpeedSections.render then
+                if ImGui.BeginTabItem("Speed Sections") then
+                    ImGui.Spacing()
+                    self.SpeedSections:render()
+                    ImGui.EndTabItem()
+                end
             end
 
             -- -------------------------------------------------------------
             -- TAB 4: Offsets Calculator
             -- -------------------------------------------------------------
-            if ImGui.BeginTabItem("Offsets Calculator") then
-                ImGui.Spacing()
-                self.Offsets:render(self.formatter, self.enableReplacer)
-                ImGui.EndTabItem()
+            if self.Offsets and self.Offsets.render then
+                if ImGui.BeginTabItem("Offsets Calculator") then
+                    ImGui.Spacing()
+                    self.Offsets:render(self.formatter, self.enableReplacer)
+                    ImGui.EndTabItem()
+                end
             end
 
             -- -------------------------------------------------------------
             -- TAB 5: Teleport Player
             -- -------------------------------------------------------------
-            if ImGui.BeginTabItem("Teleport") then
-                ImGui.Spacing()
-                self.Teleport:render()
-                ImGui.EndTabItem()
+            if self.Teleport and self.Teleport.render then
+                if ImGui.BeginTabItem("Teleport") then
+                    ImGui.Spacing()
+                    self.Teleport:render()
+                    ImGui.EndTabItem()
+                end
             end
 
             ImGui.EndTabBar()
