@@ -18,6 +18,7 @@
 ---@field favoritesFileName string
 ---@field newFavName string
 ---@field searchQuery string
+---@field sortMode integer 0 = Custom/Manual, 1 = A-Z, 2 = Z-A, 3 = Distance
 local Teleport = {
     Utils = require('modules/Utils'),
     Exporter = require('modules/classes/Exporter'),
@@ -30,7 +31,8 @@ local Teleport = {
     favoritesLoaded = false,
     favoritesFileName = "teleport_favorites.json",
     newFavName = '',
-    searchQuery = ''
+    searchQuery = '',
+    sortMode = 0
 }
 
 ---Returns default Night City landmarks for initial favorites
@@ -232,6 +234,34 @@ function Teleport:deleteFavorite(index)
     end
 end
 
+---Move a favorite entry up or down in the list
+---@param index integer
+---@param direction integer -1 for up, 1 for down
+function Teleport:moveFavorite(index, direction)
+    local targetIndex = index + direction
+    if targetIndex >= 1 and targetIndex <= #self.favorites then
+        local temp = self.favorites[index]
+        self.favorites[index] = self.favorites[targetIndex]
+        self.favorites[targetIndex] = temp
+        self:saveFavorites(true)
+        self.Utils.UIshowNotificationMsg("Reordered favorite: " .. (temp.name or "Entry"))
+    end
+end
+
+---Calculate 3D distance between player and a favorite location
+---@param playerPos Vector4?
+---@param fav FavoriteLocation
+---@return number?
+function Teleport:getFavoriteDistance(playerPos, fav)
+    if not playerPos or fav.type == 1 or not (fav.x and fav.y and fav.z) then
+        return nil
+    end
+    local dx = (tonumber(fav.x) or 0) - playerPos.x
+    local dy = (tonumber(fav.y) or 0) - playerPos.y
+    local dz = (tonumber(fav.z) or 0) - playerPos.z
+    return math.sqrt(dx * dx + dy * dy + dz * dz)
+end
+
 ---Teleport player directly to a coordinate vector and optional yaw
 ---@param pos Vector4
 ---@param yaw number?
@@ -429,7 +459,7 @@ function Teleport:render()
     -- -------------------------------------------------------------
     ImGui.TextColored(0.4, 0.8, 1.0, 1.0, string.format("Favorite Locations (%d):", #self.favorites))
 
-    ImGui.PushItemWidth(200 * self.viewSize)
+    ImGui.PushItemWidth(180 * self.viewSize)
     self.searchQuery = ImGui.InputTextWithHint("##FavSearch", "Search favorites...", self.searchQuery, 128)
     ImGui.PopItemWidth()
 
@@ -441,10 +471,24 @@ function Teleport:render()
     end
     self.Utils.tooltip("Restore built-in Night City landmark favorites")
 
+    -- Sort Mode Selector
+    ImGui.Text("Sort:")
+    ImGui.SameLine()
+    ImGui.PushItemWidth(75 * self.viewSize)
+    self.sortMode = ImGui.RadioButton("Manual", self.sortMode, 0)
+    ImGui.SameLine()
+    self.sortMode = ImGui.RadioButton("A-Z", self.sortMode, 1)
+    ImGui.SameLine()
+    self.sortMode = ImGui.RadioButton("Z-A", self.sortMode, 2)
+    ImGui.SameLine()
+    self.sortMode = ImGui.RadioButton("Distance", self.sortMode, 3)
+    ImGui.PopItemWidth()
+
     ImGui.Spacing()
 
     -- Filter favorites based on search query
     local query = self.searchQuery:lower():gsub("^%s*(.-)%s*$", "%1")
+    local playerPos = player and player:GetWorldPosition()
     local matchingFavorites = {}
     for i, fav in ipairs(self.favorites) do
         local matches = true
@@ -461,8 +505,26 @@ function Teleport:render()
         end
 
         if matches then
-            table.insert(matchingFavorites, { index = i, data = fav })
+            local dist = self:getFavoriteDistance(playerPos, fav)
+            table.insert(matchingFavorites, { index = i, data = fav, dist = dist })
         end
+    end
+
+    -- Apply sorting
+    if self.sortMode == 1 then
+        table.sort(matchingFavorites, function(a, b)
+            return (a.data.name or ""):lower() < (b.data.name or ""):lower()
+        end)
+    elseif self.sortMode == 2 then
+        table.sort(matchingFavorites, function(a, b)
+            return (a.data.name or ""):lower() > (b.data.name or ""):lower()
+        end)
+    elseif self.sortMode == 3 then
+        table.sort(matchingFavorites, function(a, b)
+            local distA = a.dist or 999999999
+            local distB = b.dist or 999999999
+            return distA < distB
+        end)
     end
 
     if #matchingFavorites == 0 then
@@ -478,6 +540,7 @@ function Teleport:render()
             local originalIndex = item.index
             local fav = item.data
             local favId = fav.id or tostring(originalIndex)
+            local dist = item.dist
 
             ImGui.PushID("FavRow_" .. favId)
 
@@ -486,9 +549,39 @@ function Teleport:render()
             ImGui.SameLine()
 
             if fav.type == 0 or (fav.x and fav.y and fav.z) then
-                ImGui.TextColored(0.6, 0.6, 0.6, 1.0, string.format("(%.2f, %.2f, %.2f)", tonumber(fav.x) or 0, tonumber(fav.y) or 0, tonumber(fav.z) or 0))
+                if dist then
+                    ImGui.TextColored(0.6, 0.6, 0.6, 1.0, string.format("(%.2f, %.2f, %.2f) • %.1fm", tonumber(fav.x) or 0, tonumber(fav.y) or 0, tonumber(fav.z) or 0, dist))
+                else
+                    ImGui.TextColored(0.6, 0.6, 0.6, 1.0, string.format("(%.2f, %.2f, %.2f)", tonumber(fav.x) or 0, tonumber(fav.y) or 0, tonumber(fav.z) or 0))
+                end
             else
                 ImGui.TextColored(0.6, 0.6, 0.6, 1.0, string.format("[NodeRef: %s]", tostring(fav.nodeRef or "")))
+            end
+
+            -- Manual reordering buttons (visible in Manual sort mode when list is not filtered)
+            if self.sortMode == 0 and query == '' then
+                if originalIndex > 1 then
+                    if ImGui.Button("^##Up_" .. favId) then
+                        self:moveFavorite(originalIndex, -1)
+                        ImGui.PopID()
+                        break
+                    end
+                    self.Utils.tooltip("Move up in order")
+                else
+                    ImGui.TextDisabled("^")
+                end
+                ImGui.SameLine()
+                if originalIndex < #self.favorites then
+                    if ImGui.Button("v##Down_" .. favId) then
+                        self:moveFavorite(originalIndex, 1)
+                        ImGui.PopID()
+                        break
+                    end
+                    self.Utils.tooltip("Move down in order")
+                else
+                    ImGui.TextDisabled("v")
+                end
+                ImGui.SameLine()
             end
 
             -- Action buttons

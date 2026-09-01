@@ -5,7 +5,7 @@
 ---@field enableReplacer boolean
 ---@field viewSize number
 local UI = {
-    version = "0.0.9",
+    version = "0.1.0",
     Utils = require('modules/Utils'),
     Teleport = require('modules/ui/Teleport'),
     Offsets = require('modules/ui/Offsets'),

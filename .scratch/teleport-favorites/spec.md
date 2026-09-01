@@ -8,6 +8,11 @@ Adds the ability to save, name, manage, and instantly teleport to favorite locat
 - Provide default Night City presets if no file exists.
 - Save either the player's current live position or custom-typed coordinates / NodeRef.
 - Search and filter saved favorite locations by name or coordinates.
+- Multiple sorting options:
+  - **Manual / Custom Order**: Reorder favorites up (`^`) and down (`v`) with persistent ordering.
+  - **Name (A-Z)**: Alphabetical ascending.
+  - **Name (Z-A)**: Alphabetical descending.
+  - **Distance**: Sort dynamically by real-time 3D distance from player with meter indicator.
 - Actions per favorite:
   - **Teleport**: Warp directly to the coordinates / NodeRef.
   - **Load to Form**: Populate the input fields for manual inspection and modification.
