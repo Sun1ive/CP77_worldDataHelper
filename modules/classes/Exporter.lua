@@ -13,6 +13,21 @@ function Exporter.fileExists(filename)
     return false
 end
 
+---Load string content from a file path
+---@param path string
+---@return string? content
+---@return string? errorMsg
+function Exporter.loadFile(path)
+    local file, err = io.open(path, "r")
+    if not file then
+        return nil, err or "Failed to open file for reading"
+    end
+    local content = file:read("*a")
+    file:close()
+    return content, nil
+end
+
+
 ---Save string content to a file path
 ---@param path string
 ---@param data string
